@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-collector
+  namespace: collecter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-collector
+  template:
+    metadata:
+      labels:
+        app: k8s-collector
+    spec:
+      serviceAccountName: k8s-collector
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: collector
+          image: ghcr.io/chambittrace/k8s_collector:latest
+          imagePullPolicy: Always
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-collector
+  namespace: collecter
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k8s-collector-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes", "namespaces"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8s-collector-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: k8s-collector-role
+subjects:
+  - kind: ServiceAccount
+    name: k8s-collector
+    namespace: collecter
