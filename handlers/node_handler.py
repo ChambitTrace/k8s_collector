@@ -1,18 +1,23 @@
-# handlers/node_handler.py
+import uuid
+from crud.node_crud import create_node, delete_node, update_node
+
+# This is a temporary placeholder. You should have a mechanism to get the actual cluster ID.
+TEMP_CLUSTER_ID = uuid.uuid4()
 
 def handle_node_event(event_type, node_obj):
     node_name = node_obj.metadata.name
     created_at = node_obj.metadata.creation_timestamp
 
-    zone = node_obj.metadata.labels.get("topology.kubernetes.io/zone") or \
-           node_obj.metadata.labels.get("failure-domain.beta.kubernetes.io/zone", "unknown")
+    zone = node_obj.metadata.labels.get("topology.kubernetes.io/zone")
+    if zone is None:
+        zone = node_obj.metadata.labels.get("failure-domain.beta.kubernetes.io/zone")
+    if zone is None:
+        zone = None
 
     if event_type == 'ADDED':
-        print(f"[+] Node 생성: {node_name} (zone={zone})")
-        # PostgreSQL INSERT
+        # The cluster ID should be retrieved from a config or another source.
+        create_node(TEMP_CLUSTER_ID, node_name, zone, int(created_at.timestamp()))
     elif event_type == 'MODIFIED':
-        print(f"[~] Node 변경: {node_name} (zone={zone})")
-        # PostgreSQL UPDATE
+        update_node(node_name, zone)
     elif event_type == 'DELETED':
-        print(f"[-] Node 삭제: {node_name}")
-        # PostgreSQL DELETE
+        delete_node(node_name)

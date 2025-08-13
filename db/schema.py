@@ -1,0 +1,1 @@
+"""This file can be used for database schema related operations in the future."""

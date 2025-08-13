@@ -13,6 +13,7 @@ def watch_pods():
             for event in w.stream(v1.list_pod_for_all_namespaces, timeout_seconds=60):
                 event_type = event['type']  # ADDED / MODIFIED / DELETED
                 pod = event['object']
+                print(f"🐛 Debug: Pod '{pod.metadata.name}' 이벤트 타입: {event_type}")
                 handle_pod_event(event_type, pod)
         except Exception as e:
             print(f"❌ Pod watch 오류: {e}, 재시도 중...")
