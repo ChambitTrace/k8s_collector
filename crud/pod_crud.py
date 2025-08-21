@@ -7,11 +7,16 @@ def create_pod(p_name, p_nid, p_nsid, p_sid, p_created_at):
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        # Convert all UUIDs to strings before using them in SQL parameters
+       
         p_nid_str = str(p_nid)
         p_nsid_str = str(p_nsid)
-        # p_created_at is already a Unix timestamp integer
         p_created_at_ts = p_created_at
+
+        cur.execute("SELECT 1 FROM t_pod WHERE p_name = %s AND p_nsid = %s", (p_name, p_nsid_str))
+        if cur.fetchone() is not None:
+            print(f"[=] Pod '{p_name}' already exists for namespace id {p_nsid_str}. Skipping insert.")
+            cur.close()
+            return
         # Check foreign key existence for p_nid in t_node(n_id)
         cur.execute("SELECT 1 FROM t_node WHERE n_id = %s", (p_nid_str,))
         if cur.fetchone() is None:
@@ -64,6 +69,22 @@ def delete_pod(p_name, p_nsid):
         if conn:
             conn.rollback()
         print(error)
+    finally:
+        if conn is not None:
+            release_db_connection(conn)
+
+def list_all_pods():
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT p_name, p_nsid FROM t_pod")
+        rows = cur.fetchall()
+        cur.close()
+        return rows  # list of tuples: [(p_name, p_nsid), ...]
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        return []
     finally:
         if conn is not None:
             release_db_connection(conn)

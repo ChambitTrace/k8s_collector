@@ -1,13 +1,17 @@
 from kubernetes import client, config, watch
-from handlers.pod_handler import handle_pod_event
+from handlers.pod_handler import handle_pod_event, init_pod_sync
 
 def watch_pods():
-    config.load_incluster_config()
+    try:
+        config.load_incluster_config()
+    except Exception:
+        config.load_kube_config()
+
     v1 = client.CoreV1Api()
     w = watch.Watch()
 
     print("🚀 Pod 이벤트 감지 시작")
-
+    init_pod_sync()
     while True:
         try:
             for event in w.stream(v1.list_pod_for_all_namespaces, timeout_seconds=60):
